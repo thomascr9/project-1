@@ -9,10 +9,27 @@ covid_dat <- read.csv("WHO-COVID-19-global-data.csv")
 italy_dat <- covid_dat %>%
   filter(Country == "Italy")
 
+italy_dat_early <- italy_dat[44:87,] %>%
+  mutate(scaled_cases = Cumulative_cases/max(Cumulative_cases))
 
-plot(italy_dat$Cumulative_cases[44:87]) #italy cum cases 2/15 to 3/29
+italy_dat_early["index"] <- seq(1:nrow(italy_dat_early))
 
-#erf_fit <- erf(italy_dat$Cumulative_cases) #not sure how to fit this function
+
+plot(italy_dat_early$scaled_cases) #italy cum cases 2/15 to 3/29
+
+# Logistic Regression
+
+log_fit <- glm(scaled_cases~index, family = "binomial", data = italy_dat_early)
+summary(log_fit)
+
+newdat <- data.frame(index = seq(0,100,1))
+newdat$preds = predict(log_fit, newdata=newdat, type="response")
+
+ggplot() +
+  geom_point(data = italy_dat_early, aes(x=index, y=scaled_cases)) +
+  geom_line(data = newdat, aes(x = index, y = preds))
+
+# need to get flex date
 
 
 # MC simulations
@@ -40,3 +57,15 @@ mult <- function(x, y){
 }
 
 test <- mult(cum_days, simulations)
+
+# Run logistic regression for 150 simulations and get flex date for each
+
+
+
+# Extension: US Data
+
+us_dat <- covid_dat %>%
+  filter(Country == "United States of America")
+
+
+plot(us_dat$Cumulative_cases[30:100])
