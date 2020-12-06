@@ -4,28 +4,28 @@ library(readr)
 
 set.seed(400)
 
-covid_dat <- read.csv("WHO-COVID-19-global-data.csv")
+covid_dat <- read.csv("WHO-COVID-19-global-data.csv") #reading in WHO data
 
-italy_dat <- covid_dat %>%
+italy_dat <- covid_dat %>% # filtering for Italy data
   filter(Country == "Italy")
 
-italy_dat_early <- italy_dat[44:87,] %>%
-  mutate(scaled_cases = Cumulative_cases/max(Cumulative_cases))
+italy_dat_early <- italy_dat[44:87,] %>% #filtering 2/15 to 3/29
+  mutate(scaled_cases = Cumulative_cases/max(Cumulative_cases)) #scaling data to be used with log regression
 
-italy_dat_early["index"] <- seq(1:nrow(italy_dat_early))
+italy_dat_early["index"] <- seq(1:nrow(italy_dat_early)) #creating index column
 
 
-plot(italy_dat_early$scaled_cases) #italy cum cases 2/15 to 3/29
+plot(italy_dat_early$Cumulative_cases) #plotting cumulative cases
 
 # Logistic Regression
 
 log_fit <- glm(scaled_cases~index, family = "binomial", data = italy_dat_early)
 summary(log_fit)
 
-newdat <- data.frame(index = seq(0,100,1))
-newdat$preds = predict(log_fit, newdata=newdat, type="response")
+newdat <- data.frame(index = seq(0,100,1)) 
+newdat$preds = predict(log_fit, newdata=newdat, type="response") #using logistic model to get predictions to use to plot
 
-ggplot() +
+ggplot() + #plotting scaled cases and predictions using log model
   geom_point(data = italy_dat_early, aes(x=index, y=scaled_cases)) +
   geom_line(data = newdat, aes(x = index, y = preds))
 
