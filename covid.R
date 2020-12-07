@@ -19,6 +19,24 @@ plot(italy_dat_early$Cumulative_cases) #plotting cumulative cases
 
 # Logistic Regression
 
+# NLS METHOD
+
+coef(lm(logit(italy_dat_early$Cumulative_cases/100000)~italy_dat_early$index))
+
+italy_log = nls(italy_dat_early$Cumulative_cases~a/(1+exp(-(b+c*italy_dat_early$index))),
+            start=list(a=100000,b=-10.242468,c=0.293917),data=italy_dat_early,trace=TRUE)
+
+summary(italy_log)
+
+flex_point = -coef(italy_log)[2]/coef(italy_log)[3]
+
+projection = (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
+
+plot(italy_dat_early$index,italy_dat_early$Cumulative_cases,ylim = c(0,130000),xlim = c(0,100))
+lines(1:100,projection)
+
+# GLM METHOD
+
 log_fit <- glm(scaled_cases~index, family = "binomial", data = italy_dat_early)
 summary(log_fit)
 
