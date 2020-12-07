@@ -1,5 +1,4 @@
 library(tidyverse)
-library(pracma)
 library(readr)
 library(car)
 
@@ -24,19 +23,19 @@ plot(italy_dat_early$Cumulative_cases) #plotting cumulative cases
 
 coef(lm(logit(italy_dat_early$Cumulative_cases/100000)~italy_dat_early$index))
 
-italy_log = nls(italy_dat_early$Cumulative_cases~a/(1+exp(-(b+c*italy_dat_early$index))),
+italy_log <- nls(italy_dat_early$Cumulative_cases~a/(1+exp(-(b+c*italy_dat_early$index))),
             start=list(a=100000,b=-10.242468,c=0.293917),data=italy_dat_early,trace=TRUE)
 
 summary(italy_log)
 
-flex_point = -coef(italy_log)[2]/coef(italy_log)[3]
+flex_point <- -coef(italy_log)[2]/coef(italy_log)[3]
 
-projection = (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
+projection <- (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
 
 plot(italy_dat_early$index,italy_dat_early$Cumulative_cases,ylim = c(0,130000),xlim = c(0,100))
 lines(1:100,projection)
 
-# GLM METHOD
+# GLM METHOD-- should we keep this????
 
 log_fit <- glm(scaled_cases~index, family = "binomial", data = italy_dat_early)
 summary(log_fit)
@@ -47,8 +46,6 @@ newdat$preds = predict(log_fit, newdata=newdat, type="response") #using logistic
 ggplot() + #plotting scaled cases and predictions using log model
   geom_point(data = italy_dat_early, aes(x=index, y=scaled_cases)) +
   geom_line(data = newdat, aes(x = index, y = preds))
-
-# need to get flex date
 
 
 # MC simulations
@@ -77,7 +74,36 @@ mult <- function(x, y){
 
 test <- mult(cum_days, simulations)
 
+mc_mat <- as.data.frame(test)
+
 # Run logistic regression for 150 simulations and get flex date for each
+
+flex_mc <- rep(NA, 150)
+
+for (i in 1:150) {
+  row_data <- t(mc_mat[i,])
+  index <- seq(1:length(row_data))
+  coefs <- coef(lm(logit(row_data/100000)~index))
+  italy_log <- nls(row_data~a/(1+exp(-(b+c*index))),
+                  start=list(a=100000,b=coefs[1],c=coefs[2]),trace=TRUE)
+  
+  summary(italy_log)
+  
+  flex_mc[i] <- -coef(italy_log)[2]/coef(italy_log)[3]
+}
+
+##getting error for 6 of the MC simulations (too many iterations?)
+
+mean(na.omit(flex_mc)) #mean flex date
+sd(na.omit(flex_mc)) #sd of flex dates
+
+ggplot() + #plot of simulated flex dates with line for avg
+  geom_point(aes(x = seq(1,150,1), y = flex_mc), color = "red") +
+  xlab("MC Simulation") +
+  ylab("# Days from Feb 15th") +
+  ggtitle("Projected Flex Date for 150 MC Simulations") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc))))
+
 
 
 
