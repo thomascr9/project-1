@@ -112,5 +112,67 @@ ggplot() + #plot of simulated flex dates with line for avg
 us_dat <- covid_dat %>%
   filter(Country == "United States of America")
 
+plot(us_dat$Cumulative_cases) #all US cumulative and new positive cases (day 1 = Jan 3rd)
+plot(us_dat$New_cases)
 
-plot(us_dat$Cumulative_cases[30:100])
+plot(us_dat$Cumulative_cases[30:100]) #Feb 1st through April 11th
+plot(us_dat$New_cases[30:100])
+
+
+# NLS 
+
+us_dat_early <- us_dat[30:100,] #selecting days Feb 1st to April 11th
+
+us_dat_early["index"] <- seq(1:nrow(us_dat_early)) #creating index column
+
+
+plot(us_dat_early$Cumulative_cases) #plotting cumulative cases
+
+coef(lm(logit(us_dat_early$Cumulative_cases/500000)~us_dat_early$index))
+
+us_log <- nls(us_dat_early$Cumulative_cases~a/(1+exp(-(b+c*us_dat_early$index))),
+                 start=list(a=500000,b=-13.0652170,c=0.1920636),data=us_dat_early,trace=TRUE)
+
+summary(us_log)
+
+flex_point <- -coef(us_log)[2]/coef(us_log)[3]
+
+projection <- (coef(us_log)[1])/(1 + exp(-(coef(us_log)[2]+coef(us_log)[3]*1:100)))
+
+plot(us_dat_early$index,us_dat_early$Cumulative_cases,ylim = c(0,500000),xlim = c(0,100))
+lines(1:100,projection)
+
+# MC Simulations
+
+cum_days_us <- us_dat_early$Cumulative_cases
+
+simulations_us <- sim(150, 71) #150 simulations for 71 days
+
+
+test_us <- mult(cum_days_us, simulations_us)
+
+mc_mat_us <- as.data.frame(test_us)
+
+flex_mc_us <- rep(NA, 150)
+
+for (i in 1:150) {
+  row_data <- t(mc_mat_us[i,])
+  index <- seq(1:length(row_data))
+  coefs <- coef(lm(logit(row_data/500000)~index))
+  us_log <- nls(row_data~a/(1+exp(-(b+c*index))),
+                   start=list(a=500000,b=coefs[1],c=coefs[2]),trace=TRUE)
+  
+  summary(us_log)
+  
+  flex_mc_us[i] <- -coef(us_log)[2]/coef(us_log)[3]
+}
+
+mean(na.omit(flex_mc_us)) #mean flex date -> 67 days from Feb 1st = April 7th
+sd(na.omit(flex_mc_us)) #sd of flex dates
+
+ggplot() + #plot of simulated flex dates with line for avg
+  geom_point(aes(x = seq(1,150,1), y = flex_mc_us), color = "red") +
+  xlab("MC Simulation") +
+  ylab("# Days from Feb 1st") +
+  ggtitle("Projected Flex Date for 150 MC Simulations") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc_us))))
