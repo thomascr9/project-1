@@ -1,6 +1,7 @@
 library(tidyverse)
 library(pracma)
 library(readr)
+library(car)
 
 set.seed(400)
 
