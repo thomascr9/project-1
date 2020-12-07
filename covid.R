@@ -9,8 +9,10 @@ covid_dat <- read.csv("WHO-COVID-19-global-data.csv") #reading in WHO data
 italy_dat <- covid_dat %>% # filtering for Italy data
   filter(Country == "Italy")
 
-italy_dat_early <- italy_dat[44:87,] %>% #filtering 2/15 to 3/29
-  mutate(scaled_cases = Cumulative_cases/max(Cumulative_cases)) #scaling data to be used with log regression
+plot(italy_dat$Cumulative_cases) #all cumulative cases for italy (day 1 = Jan 3rd)
+plot(italy_dat$New_cases)
+
+italy_dat_early <- italy_dat[44:87,]  #filtering 2/15 to 3/29
 
 italy_dat_early["index"] <- seq(1:nrow(italy_dat_early)) #creating index column
 
@@ -92,9 +94,10 @@ for (i in 1:150) {
   flex_mc[i] <- -coef(italy_log)[2]/coef(italy_log)[3]
 }
 
-##getting error for 6 of the MC simulations (too many iterations?)
+##getting error for some of the MC simulations (too many iterations?)
 
-mean(na.omit(flex_mc)) #mean flex date
+mean(na.omit(flex_mc)) #mean flex date -> 39 days from Feb 15th = March 24th
+  #original paper's result was March 25th so we are close!
 sd(na.omit(flex_mc)) #sd of flex dates
 
 ggplot() + #plot of simulated flex dates with line for avg
