@@ -2,22 +2,40 @@ library(tidyverse)
 library(readr)
 library(car)
 
-set.seed(400)
+set.seed(2020)
 
 covid_dat <- read.csv("WHO-COVID-19-global-data.csv") #reading in WHO data
+
+dates <- covid_dat$Date_reported
 
 italy_dat <- covid_dat %>% # filtering for Italy data
   filter(Country == "Italy")
 
-plot(italy_dat$Cumulative_cases) #all cumulative cases for italy (day 1 = Jan 3rd)
-plot(italy_dat$New_cases)
+ggplot() +
+  geom_line(data = italy_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = italy_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("Overview of COVID-19 Cases in Italy") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
 
 italy_dat_early <- italy_dat[44:87,]  #filtering 2/15 to 3/29
 
 italy_dat_early["index"] <- seq(1:nrow(italy_dat_early)) #creating index column
 
 
-plot(italy_dat_early$Cumulative_cases) #plotting cumulative cases
+
+ggplot() +
+  geom_line(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("COVID-19 Cases in Italy Feb 15th to March 29th") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
 
 # Logistic Regression
 
@@ -34,20 +52,17 @@ flex_point <- -coef(italy_log)[2]/coef(italy_log)[3]
 
 projection <- (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
 
-plot(italy_dat_early$index,italy_dat_early$Cumulative_cases,ylim = c(0,130000),xlim = c(0,100))
-lines(1:100,projection)
+proj_dates <- data.frame(projection, "date" = dates[44:143])
 
-# GLM METHOD-- should we keep this????
-
-log_fit <- glm(scaled_cases~index, family = "binomial", data = italy_dat_early)
-summary(log_fit)
-
-newdat <- data.frame(index = seq(0,100,1)) 
-newdat$preds = predict(log_fit, newdata=newdat, type="response") #using logistic model to get predictions to use to plot
-
-ggplot() + #plotting scaled cases and predictions using log model
-  geom_point(data = italy_dat_early, aes(x=index, y=scaled_cases)) +
-  geom_line(data = newdat, aes(x = index, y = preds))
+ggplot() +
+  geom_point(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = proj_dates, aes(x = as.Date(date, "%m/%d/%y"), y = projection), color = "blue") +
+  ylim(0,130000) +
+  xlab("Date") +
+  ylab("Cumulative Cases") +
+  ggtitle("Cumulative Cases with Fitted Regression Line for Italy") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
 
 
 # MC simulations
@@ -104,9 +119,9 @@ ggplot() + #plot of simulated flex dates with line for avg
   geom_point(aes(x = seq(1,150,1), y = flex_mc), color = "red") +
   xlab("MC Simulation") +
   ylab("# Days from Feb 15th") +
-  ggtitle("Projected Flex Date for 150 MC Simulations") +
-  geom_hline(aes(yintercept = mean(na.omit(flex_mc))))
-
+  ggtitle("Projected Flex Date for 150 MC Simulations (Italy)") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc)))) +
+  theme_bw()
 
 
 
@@ -115,21 +130,32 @@ ggplot() + #plot of simulated flex dates with line for avg
 us_dat <- covid_dat %>%
   filter(Country == "United States of America")
 
-plot(us_dat$Cumulative_cases) #all US cumulative and new positive cases (day 1 = Jan 3rd)
-plot(us_dat$New_cases)
+ggplot() +
+  geom_line(data = us_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = us_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("Overview of COVID-19 Cases in the United States") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
 
-plot(us_dat$Cumulative_cases[30:100]) #Feb 1st through April 11th
-plot(us_dat$New_cases[30:100])
+
+us_dat_early <- us_dat[30:100,] #selecting days Feb 1st to April 11th
+
+ggplot() +
+  geom_line(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("COVID-19 Cases in US Feb 1st to April 11th") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
 
 
 # NLS 
 
-us_dat_early <- us_dat[30:100,] #selecting days Feb 1st to April 11th
-
 us_dat_early["index"] <- seq(1:nrow(us_dat_early)) #creating index column
 
-
-plot(us_dat_early$Cumulative_cases) #plotting cumulative cases
 
 coef(lm(logit(us_dat_early$Cumulative_cases/500000)~us_dat_early$index))
 
@@ -142,8 +168,17 @@ flex_point <- -coef(us_log)[2]/coef(us_log)[3]
 
 projection <- (coef(us_log)[1])/(1 + exp(-(coef(us_log)[2]+coef(us_log)[3]*1:100)))
 
-plot(us_dat_early$index,us_dat_early$Cumulative_cases,ylim = c(0,500000),xlim = c(0,100))
-lines(1:100,projection)
+proj_dates <- data.frame(projection, "date" = dates[30:129])
+
+ggplot() +
+  geom_point(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = proj_dates, aes(x = as.Date(date, "%m/%d/%y"), y = projection), color = "blue") +
+  ylim(0,650000) +
+  xlab("Date") +
+  ylab("Cumulative Cases") +
+  ggtitle("Cumulative Cases with Fitted Regression Line for US") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
 
 # MC Simulations
 
@@ -177,5 +212,6 @@ ggplot() + #plot of simulated flex dates with line for avg
   geom_point(aes(x = seq(1,150,1), y = flex_mc_us), color = "red") +
   xlab("MC Simulation") +
   ylab("# Days from Feb 1st") +
-  ggtitle("Projected Flex Date for 150 MC Simulations") +
-  geom_hline(aes(yintercept = mean(na.omit(flex_mc_us))))
+  ggtitle("Projected Flex Date for 150 MC Simulations (US)") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc_us)))) +
+  theme_bw()
