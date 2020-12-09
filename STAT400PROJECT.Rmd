@@ -1,0 +1,146 @@
+---
+title: "Monte Carlo Projection of COVID-19 Time Evolution for Italy and the United States Using Logistic Regression"
+author: "Caroline Thomas, Spencer Kuhn, George Laird"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Abstract**
+
+This project seeks to build of the paper “Mathematical prediction of the time evolution of the COVID-19 pandemic in Italy by a Gauss error function and Monte Carlo simulations” by Ignazio Ciufolini and Antonio Paolozzi in The European Physical Journal Plus. In the paper, Ciufolini and Paolozzi use a Gauss Error function to project the “flex points,” or inflection points, of the graphs of cumulative positive COVID-19 cases over time for Italy and China, therefore predicting the point at which the rate of added cases begins to decelerate. However, given the error present in both unreported cases and delayed reports, a single projection is unreliable. Therefore, Ciufolini and Paolozzi used a more robust method utilizing Monte Carlo simulations. They multiplied the daily case totals by a vector of draws from a normal distribution with a mean of 1 and a standard deviation of 0.1, estimating that measurement discrepancies represented somewhere in the area of 10% of each daily case total. This was repeated 150 times with 150 random vectors. Then, Gauss Error regressions were fit to each adjusted set of case totals, and the flex points of each were calculated.  
+Our simulation replicates the portion of Ciufolini and Paolozzi’s paper in Italy, only with a logistic regression rather than a Gauss Error regression, and we then use the same projection methods for the United States.  
+
+\newpage
+
+**Introduction**
+
+The rapid proliferation of COVID-19 throughout the world sent countless researchers on a mission to project how the deadly virus would spread and how dangerous it might become. The earliest nations to suffer large outbreaks were China, Italy, and Iran, the first two of which are the subject of the paper “Mathematical prediction of the time evolution of theCOVID-19 pandemic in Italy by a Gauss error function and Monte Carlo simulations” by Ignazio Ciufolini and Antonio Paolozzi in The European Physical Journal Plus. Noticing the need for modeling in order to assess the necessity of public health intervention by these nations, Ciufolini and Paolozzi took early case counts from Italy and China and used a Gauss Error regression to determine when the first spike in cases might be over. The following shows the rise in daily COVID-19 cases for Italy over time, as well as the numbers from between February 15th and March 29th, according to data provided by the World Health Organization (WHO).
+
+```{r,include=FALSE}
+
+library(tidyverse)
+library(readr)
+library(car)
+
+```
+
+```{r,echo=FALSE,results='hide'}
+
+set.seed(2020)
+
+#reading in WHO data
+covid_dat <- read.csv("WHO-COVID-19-global-data.csv") 
+
+dates <- covid_dat$Date_reported
+
+#filtering for Italy data
+italy_dat <- covid_dat %>% 
+  filter(Country == "Italy")
+
+ggplot() +
+  geom_line(data = italy_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = italy_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("Overview of COVID-19 Cases in Italy") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+#filtering 2/15 to 3/29
+italy_dat_early <- italy_dat[44:87,]
+
+#creating index column
+italy_dat_early["index"] <- seq(1:nrow(italy_dat_early)) 
+
+ggplot() +
+  geom_line(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("COVID-19 Cases in Italy Feb 15th to March 29th") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+```
+
+In the United States, a similarly dramatic initial rise in cases was observed, although many argue that the United States has not in fact emerged from it's first case spike. The overall COVID-19 time evolution of the United States is plotted below, as well as the cumulative and daily case totals between February 1st and April 11th. 
+
+```{r,echo=FALSE,results='hide'}
+
+us_dat <- covid_dat %>%
+  filter(Country == "United States of America")
+
+ggplot() +
+  geom_line(data = us_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = us_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("Overview of COVID-19 Cases in the United States") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+
+us_dat_early <- us_dat[30:100,] #selecting days Feb 1st to April 11th
+
+ggplot() +
+  geom_line(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("COVID-19 Cases in US Feb 1st to April 11th") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+```
+
+However, case totals are frequently inaccurate due to delayed reporting, false positive or negative test results, and the appreciable number of individuals who had a symptomatic or asymptomatic case of the virus but did not get tested. Thus, projected case totals need to be better validated, and some measure of error is necessary in order to evaluate the true range of possibilities. 
+
+**Methods**
+
+Using RStudio and GitHub, we drafted code to first replicate the Italian predictions made by Ciufolini and Paolozzi. This involved downloading the repository of daily COVID-19 cases across all countries made in a csv file by the World Health Organization. The Italian cases between February 15th and March 29th were extracted and then run through a nonlinear least squares regression with a logistic equation as the model. The model equation is below:
+$$ \frac{a}{1+e^{-(b+cx)}} $$
+Wherein $a$ is the upper asymptote, or the maximum number cumulative cases, and $b$ and $c$ denote intercept and slope parameters. Initial parameter estimates were made using an upper asymptote estimate of 100,000 and then finding linear regression parameters of the log odds of cumulative cases per day. The nonlinear least squares (NLS) regression was then used to find final cumulative case projections (parameter “a”) and flex point projections (the opposite of parameter “b” divided by parameter “c”). NLS iterates through various adjustments to the model parameters in order to optimize the model fit. This method of finding the projection parameters and flex points is adapted from a “Marine Global Change Ecology” program at the University of Massachusetts Amherst. The primary reason we elected to use NLS with a logistic model, rather than a Gauss Error function, has to do with the difficulty of using R to approximate parameters in the Gauss function, whereas there are more methods in place for a simple logistic regression (Ciufolini and Paolozzi conducted their regression coding in Python). It was however noted in the original paper that logistic regression was tested and produced similar results. The code below details our method for finding a single projection. 
+
+```{r}
+
+#gathering initial coefficient estimates for NLS
+coef(lm(logit(italy_dat_early$Cumulative_cases/100000)~italy_dat_early$index))
+
+#running NLS algorithm
+italy_log <- nls(italy_dat_early$Cumulative_cases~a/(1+exp(-(b+c*italy_dat_early$index))),
+                 start=list(a=100000,b=-10.242468,c=0.293917),data=italy_dat_early,trace=FALSE)
+
+summary(italy_log)
+
+#calculating flex point based on coefficients
+flex_point <- -coef(italy_log)[2]/coef(italy_log)[3]
+
+#creating a projection graph based on the model
+projection <- (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
+
+#creating a vector of dates for the x-axis
+proj_dates <- data.frame(projection, "date" = dates[44:143])
+
+#plotting the projection
+ggplot() +
+  geom_point(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = proj_dates, aes(x = as.Date(date, "%m/%d/%y"), y = projection), color = "blue") +
+  ylim(0,130000) +
+  xlab("Date") +
+  ylab("Cumulative Cases") +
+  ggtitle("Cumulative Cases with Fitted Regression Line for Italy") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+```
+
+Once the procedure was completed for one data set, it was then adapted to the 150 Monte Carlo simulations, each of which consisted of a vector of randomized draws from a normal distribution with a mean of 1 and a standard deviation of 0.1, all multiplied by the daily case total with the corresponding index. Thus, 150 simulated flex dates were obtained and then plotted along with the mean of these dates. The Monte Carlo simulations allowed Ciufolini and Paolozzi to not only establish a more reliable average flex date, but also determine some measure of error in the distribution of flex dates so that statistical inference could be used to better validate their findings.
+
+For the US projection, we used case counts from between February 1st and April 11th in order to obtain a sense of the projected case totals prior to many of the measures taken by local and federal governments to flatten the curve.
+
+**Discussion**
+
+Over the last year, COVID-19 has significantly altered the lives of almost every person on the planet, and the virus has killed over 1.5 million globally. As world leaders struggle to contain the spread of the virus, it’s imperative to establish which public health plans are effective and which ones are not. Those in charge of handling this pandemic must be held accountable for their response to one of the biggest challenges of the twenty-first century. While there is often little a government can do about preventing the virus from entering their borders entirely, there have been numerous examples of effective national programs that “flattened the curve” once the first COVID cases were reported. In this paper we establish whether Italy and the United States managed to intervene and reduce daily case totals below mathematical projections.
