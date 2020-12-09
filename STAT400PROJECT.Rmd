@@ -10,8 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 **Abstract**
 
-This project seeks to build off the paper “Mathematical prediction of the time evolution of the COVID-19 pandemic in Italy by a Gauss error function and Monte Carlo simulations” by Ignazio Ciufolini and Antonio Paolozzi in The European Physical Journal Plus. In the paper, Ciufolini and Paolozzi use a Gauss Error function to project the “flex points,” or inflection points, of the graphs of cumulative positive COVID-19 cases over time for Italy and China, therefore predicting the point at which the rate of added cases begins to decelerate. However, given the error present in both unreported cases and delayed reports, a single projection is unreliable. Therefore, Ciufolini and Paolozzi used a more robust method utilizing Monte Carlo simulations. They multiplied the daily case totals by a vector of draws from a normal distribution with a mean of 1 and a standard deviation of 0.1, estimating that measurement discrepancies represented somewhere in the area of 10% of each daily case total. This was repeated 150 times with 150 random vectors. Then, Gauss Error regressions were fit to each adjusted set of case totals, and the flex points of each were calculated.  
-Our simulation replicates the portion of Ciufolini and Paolozzi’s paper in Italy, however, we employ a logistic regression rather than a Gauss Error regression, and we then use the same projection methods for the United States.  
+This project seeks to build off the paper “Mathematical prediction of the time evolution of the COVID-19 pandemic in Italy by a Gauss error function and Monte Carlo simulations” by Ignazio Ciufolini and Antonio Paolozzi in The European Physical Journal Plus $^1$. In the paper, Ciufolini and Paolozzi use a Gauss Error function to project the “flex points,” or inflection points, of the graphs of cumulative positive COVID-19 cases over time for Italy and China, therefore predicting the point at which the rate of added cases begins to decelerate. However, given the error present in both unreported cases and delayed reports, a single projection is unreliable. Therefore, Ciufolini and Paolozzi used a more robust method utilizing Monte Carlo simulations. They multiplied the daily case totals by a vector of draws from a normal distribution with a mean of 1 and a standard deviation of 0.1, estimating that measurement discrepancies represented somewhere in the area of 10% of each daily case total. This was repeated 150 times with 150 random vectors. Then, Gauss Error regressions were fit to each adjusted set of case totals, and the flex points of each were calculated. 
+
+Our simulation replicates the portion of Ciufolini and Paolozzi’s paper in Italy, however, we employ a logistic regression rather than a Gauss Error regression, and we then use the same projection methods for the United States. In the section of our study replicating the procedures Ciufolini and Paolozzi used to find the average flex date for Italian projections, we reached a similar result with a date of March 23rd, just two days before the Ciufolini and Paolozzi prediction of March 25th. Ninety-five percent confidence intervals (using t-distributed quantiles) for the flex dates yielded a narrow range between March 23rd and March 24th. For the United States extension, our average flex date was evaluated at April 7th, with confidence intervals yielding a range between April 6th and April 7th. In Italy, the localized maximum for daily case totals during the first spike in cases was reported on March 22nd. In The United States, two localized maxima were reported on April 6th and April 11th. Localized maxima for the first case spikes are estimators for the flex points for the true time evolution of the virus. When compared to the dates of administered lockdowns in Italy and the United States, it becomes clear that the Italian response, which came earlier compared to our estimated flex points, more effectively reduced daily case counts in a manner consistent with our projections and a logistic model in general, wheras the United States did not reduce case counts in a manner consistent with our projected logistic models. 
 
 \newpage
 
@@ -96,13 +97,15 @@ ggplot() +
 
 ```
 
-However, case totals are frequently inaccurate due to delayed reporting, false positive or negative test results, and the appreciable number of individuals who had a symptomatic or asymptomatic case of the virus but did not get tested. Thus, projected case totals need to be better validated, and some measure of error is necessary in order to evaluate the true range of possibilities. 
+However, case totals are frequently inaccurate due to delayed reporting, false positive or negative test results, and the appreciable number of individuals who had a symptomatic or asymptomatic case of the virus but did not get tested. Thus, projected case totals need to be better validated, and some measure of error is necessary in order to evaluate the true range of possibilities. Monte Carlo simulations can be used to test hypothetical sampling error and the possible projections that may result from slight changes to daily case totals. 
+
+\newpage
 
 **Methods**
 
-Using RStudio and GitHub, we drafted code to first replicate the Italian predictions made by Ciufolini and Paolozzi. This involved downloading the repository of daily COVID-19 cases across all countries made available in a csv file by the World Health Organization. The Italian cases between February 15th and March 29th were extracted and then run through a nonlinear least squares regression with a logistic equation as the model. The model equation is below:
+Using RStudio and GitHub, we drafted code to first replicate the Italian predictions made by Ciufolini and Paolozzi. This involved downloading the repository of daily COVID-19 cases across all countries made available in a csv file by the World Health Organization $^5$. The Italian cases between February 15th and March 29th were extracted and then run through a nonlinear least squares regression with a logistic equation as the model. The model equation is below:
 $$ \frac{a}{1+e^{-(b+cx)}} $$
-Wherein $a$ is the upper asymptote, or the maximum number cumulative cases, and $b$ and $c$ denote intercept and slope parameters. Initial parameter estimates were made using an upper asymptote estimate of 100,000 and then finding linear regression parameters of the log odds of cumulative cases per day. The nonlinear least squares (NLS) regression was then used to find final cumulative case projections (parameter “a”) and flex point projections (the opposite of parameter “b” divided by parameter “c”). NLS iterates through various adjustments to the model parameters in order to optimize the model fit. This method of finding the projection parameters and flex points is adapted from a “Marine Global Change Ecology” program at the University of Massachusetts Amherst. The primary reason we elected to use NLS with a logistic model, rather than a Gauss Error function, has to do with the difficulty of using R to approximate parameters in the Gauss function, whereas there are more methods in place for a simple logistic regression (Ciufolini and Paolozzi conducted their regression coding in Python). It was however noted in the original paper that logistic regression was tested and produced similar results. Our methods yield similar flex dates to the published study so there is not a large discrepancy between our results and the results we attempted to reproduce. The code below details our method for finding a single projection. 
+Wherein $a$ is the upper asymptote, or the maximum number cumulative cases, and $b$ and $c$ denote intercept and slope parameters. Initial parameter estimates were made using an upper asymptote estimate of 100,000 and then finding linear regression parameters of the log odds of cumulative cases per day. The nonlinear least squares (NLS) regression was then used to find final cumulative case projections (parameter “a”) and flex point projections (the opposite of parameter “b” divided by parameter “c”). NLS iterates through various adjustments to the model parameters in order to optimize the model fit. This method of finding the projection parameters and flex points is adapted from a “Marine Global Change Ecology” program at the University of Massachusetts Amherst $^2$. The primary reason we elected to use NLS with a logistic model, rather than a Gauss Error function, has to do with the difficulty of using R to approximate parameters in the Gauss function, whereas there are more methods in place for a simple logistic regression (Ciufolini and Paolozzi conducted their regression coding in Python). It was however noted in the original paper that logistic regression was tested and produced similar results. Our methods yield similar flex dates to the published study so there is not a large discrepancy between our results and the results we attempted to reproduce. The code below details our method for finding a single projection. 
 
 ```{r}
 
@@ -119,15 +122,130 @@ summary(italy_log)
 flex_point <- -coef(italy_log)[2]/coef(italy_log)[3]
 
 #creating a projection graph based on the model
-projection <- (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
+projection_italy <- (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
 
 #creating a vector of dates for the x-axis
-proj_dates <- data.frame(projection, "date" = dates[44:143])
+proj_dates_italy <- data.frame(projection_italy, "date" = dates[44:143])
 
-#plotting the projection
+```
+
+Once the procedure was completed for one data set, it was then adapted to the 150 Monte Carlo simulations, each of which consisted of a vector of randomized draws from a normal distribution with a mean of 1 and a standard deviation of 0.1, all multiplied by the daily case total with the corresponding index. Thus, 150 simulated flex dates were obtained and then plotted along with the mean of these dates. The Monte Carlo simulations allowed Ciufolini and Paolozzi to not only establish a more reliable average flex date, but also determine some measure of error in the distribution of flex dates so that statistical inference could be used to better validate their findings. In particular, 95% confidence intervals using t-distributed quantiles with 149 degrees of freedom were made to estimate the probable range within which the true flex date resides. The Monte Carlo simulation and inference algorithms are below:
+
+```{r}
+
+#writing a function to simulate Monte Carlo random vectors
+sim <- function(m, n) {
+  mat <- matrix(data = NA, nrow = m, ncol = n) 
+  
+  for (i in 1:m){
+    mat[i,] <- rnorm(n, sd = 0.1, mean = 1)
+  }
+  
+  return(mat)
+}
+
+#using cum cases from Feb 15th to March 26th
+cum_days <- italy_dat[44:84,6] 
+
+#creating 150 simulations for 41 days
+simulations <- sim(150, 41)
+
+#writing a function that multiplies the simulation vectors by the case count vector
+mult <- function(x, y){
+  new_mat <- matrix(data = NA, nrow = 150, ncol = length(x))
+  for (i in 1:length(x)) {
+    new_mat[,i] <- x[i]*y[,i]
+  }
+  return(new_mat)
+}
+
+#multiplying the cumulative days vector by each simulation
+test <- mult(cum_days, simulations)
+
+mc_mat <- as.data.frame(test)
+
+#running logistic regression for 150 simulations and get flex date for each
+
+flex_mc <- rep(NA, 150)
+
+for (i in 1:150) {
+  row_data <- t(mc_mat[i,])
+  index <- seq(1:length(row_data))
+  coefs <- coef(lm(logit(row_data/100000)~index))
+  italy_log <- nls(row_data~a/(1+exp(-(b+c*index))),
+                  start=list(a=100000,b=coefs[1],c=coefs[2]),trace=FALSE)
+  flex_mc[i] <- -coef(italy_log)[2]/coef(italy_log)[3]
+}
+
+#gathering mean flex date -> 38 days from Feb 15th = March 23rd
+mean(na.omit(flex_mc)) 
+
+#gathering standard deviation of flex dates
+sd(na.omit(flex_mc)) 
+
+#obtaining confidence intervals for the true flex date
+upper <- mean(flex_mc) + qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
+lower <- mean(flex_mc) - qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
+
+lower
+upper
+
+```
+
+For the US projection, we used case counts from between February 1st and April 11th in order to obtain a sense of the projected case totals prior to many of the measures taken by local and federal governments to flatten the curve. Initial asymptote estimates were set at 700,000. The flex date algorithm was otherwise identical, with and average date calculated along with its corresponding confidence interval. 
+
+\newpage
+
+**Results**
+
+The first plots show our raw data projections for Italy and the United States:
+
+```{r,include=FALSE}
+
+us_dat <- covid_dat %>%
+  filter(Country == "United States of America")
+
+us_dat_early <- us_dat[30:100,]
+
+us_dat_early["index"] <- seq(1:nrow(us_dat_early))
+
+coef(lm(logit(us_dat_early$Cumulative_cases/500000)~us_dat_early$index))
+
+us_log <- nls(us_dat_early$Cumulative_cases~a/(1+exp(-(b+c*us_dat_early$index))),
+                 start=list(a=500000,b=-13.0652170,c=0.1920636),data=us_dat_early,trace=FALSE)
+
+flex_point <- -coef(us_log)[2]/coef(us_log)[3]
+
+projection_us <- (coef(us_log)[1])/(1 + exp(-(coef(us_log)[2]+coef(us_log)[3]*1:100)))
+
+proj_dates_us <- data.frame(projection_us, "date" = dates[30:129])
+
+cum_days_us <- us_dat_early$Cumulative_cases
+
+simulations_us <- sim(150, 71)
+
+test_us <- mult(cum_days_us, simulations_us)
+
+mc_mat_us <- as.data.frame(test_us)
+
+flex_mc_us <- rep(NA, 150)
+
+for (i in 1:150) {
+  row_data <- t(mc_mat_us[i,])
+  index <- seq(1:length(row_data))
+  coefs <- coef(lm(logit(row_data/700000)~index))
+  us_log <- nls(row_data~a/(1+exp(-(b+c*index))),
+                   start=list(a=700000,b=coefs[1],c=coefs[2]),trace=FALSE)
+  flex_mc_us[i] <- -coef(us_log)[2]/coef(us_log)[3]
+}
+
+```
+
+```{r,echo=FALSE,results='hide'}
+
 ggplot() +
   geom_point(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
-  geom_line(data = proj_dates, aes(x = as.Date(date, "%m/%d/%y"), y = projection), color = "blue") +
+  geom_line(data = proj_dates_italy, aes(x = as.Date(date, "%m/%d/%y"), y = projection_italy), color = "blue") +
   ylim(0,130000) +
   xlab("Date") +
   ylab("Cumulative Cases") +
@@ -135,12 +253,102 @@ ggplot() +
   theme(axis.text.x = element_text(angle=45, hjust = 1)) +
   theme_bw()
 
+ggplot() +
+  geom_point(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = proj_dates_us, aes(x = as.Date(date, "%m/%d/%y"), y = projection_us), color = "blue") +
+  ylim(0,650000) +
+  xlab("Date") +
+  ylab("Cumulative Cases") +
+  ggtitle("Cumulative Cases with Fitted Regression Line for US") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
 ```
 
-Once the procedure was completed for one data set, it was then adapted to the 150 Monte Carlo simulations, each of which consisted of a vector of randomized draws from a normal distribution with a mean of 1 and a standard deviation of 0.1, all multiplied by the daily case total with the corresponding index. Thus, 150 simulated flex dates were obtained and then plotted along with the mean of these dates. The Monte Carlo simulations allowed Ciufolini and Paolozzi to not only establish a more reliable average flex date, but also determine some measure of error in the distribution of flex dates so that statistical inference could be used to better validate their findings.
+The plots below show the flex points of each projection for Italy and the United States:
 
-For the US projection, we used case counts from between February 1st and April 11th in order to obtain a sense of the projected case totals prior to many of the measures taken by local and federal governments to flatten the curve.
+```{r,echo=FALSE,results='hide'}
+
+ggplot() + #plot of simulated flex dates with line for avg
+  geom_point(aes(x = seq(1,150,1), y = flex_mc), color = "red") +
+  xlab("MC Simulation") +
+  ylab("# Days from Feb 15th") +
+  ggtitle("Projected Flex Date for 150 MC Simulations (Italy)") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc)))) +
+  theme_bw()
+
+ggplot() + #plot of simulated flex dates with line for avg
+  geom_point(aes(x = seq(1,150,1), y = flex_mc_us), color = "red") +
+  xlab("MC Simulation") +
+  ylab("# Days from Feb 1st") +
+  ggtitle("Projected Flex Date for 150 MC Simulations (US)") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc_us)))) +
+  theme_bw()
+
+```
+
+Corresponding to these plots, we gathered the mean, standard deviation, and 95%, t-quantile confidence intervals for Italian and US flex points:
+
+```{r}
+
+#ITALY
+
+#gathering mean flex date -> 38 days from Feb 15th = March 23rd
+mean(na.omit(flex_mc)) 
+
+#gathering standard deviation of flex dates
+sd(na.omit(flex_mc)) 
+
+#obtaining confidence intervals for the true flex date
+upper <- mean(flex_mc) + qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
+lower <- mean(flex_mc) - qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
+
+lower
+upper
+#March 23rd to March 24th
+
+#UNITED STATES
+
+#gathering mean flex date -> 67 days from Feb 1st = April 7th
+mean(na.omit(flex_mc_us)) 
+
+#gathering standard deviation of flex dates
+sd(na.omit(flex_mc_us)) 
+
+#obtaining confidence intervals for the true flex date
+upper <- mean(flex_mc_us) + qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
+lower <- mean(flex_mc_us) - qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
+
+lower
+upper
+#April 6th to April 7th
+
+
+```
+
+\newpage
 
 **Discussion**
 
-Over the last year, COVID-19 has significantly altered the lives of almost every person on the planet, and the virus has killed over 1.5 million globally. As world leaders struggle to contain the spread of the virus, it’s imperative to establish which public health plans are effective and which ones are not. Those in charge of handling this pandemic must be held accountable for their response to one of the biggest challenges of the twenty-first century. While there is often little a government can do about preventing the virus from entering their borders entirely, there have been numerous examples of effective national programs that “flattened the curve” once the first COVID cases were reported. In this paper we establish whether Italy and the United States managed to intervene and reduce daily case totals below mathematical projections.
+Over the last year, COVID-19 has significantly altered the lives of almost every person on the planet, and the virus has killed over 1.5 million globally. As world leaders struggle to contain the spread of the virus, it’s imperative to establish which public health plans are effective and which ones are not. Those in charge of handling this pandemic must be held accountable for their response to one of the biggest challenges of the twenty-first century. While there is often little a government can do about preventing the virus from entering their borders entirely, there have been numerous examples of effective national programs that “flattened the curve” once the first COVID cases were reported. In this paper we establish whether Italy and the United States managed to intervene and reduce daily case totals below mathematical projections. 
+
+There are some notable shortcomings in our data to be considered alongside the results. To begin, NLS regression uses an optimization algorithm that differs from a traditional least squares method. In NLS, numerous local maxima may be present, meaning the algorithm may settle on a curve fit that isn't necessarily the most appropriate. Furthermore, NLS will terminate if too many iterations are required to find a proper fit. We ran into this issue with a few randomization seeds, finding that several data points had to be removed because no NLS coefficients could be found. Moreover, initial asymptote estimates were appreciably lower than the ultimately reported cumulative case totals for Italy and the United States. Thus, different asymptote estimates may have yielded different flex date estimates and model coefficients based on the way the NLS algorithm operates.
+
+In terms of replicating the experiments of Cuifolini and Paolozzi, we were able to reach an average flex date very close to their own for Italy. Any discrepancies are likely due to the NLS method. The Monte Carlo simulation method allowed us to better assess error and uncertainty in the reported numbers and the projection that resulted. In the extension of this method to the United States, we ran into some issues with the initial asymptote estimate. the NLS algorithm ran into issues with our first estimate of 500,000, so we changed the estimate to 700,000 in order for NLS to run successfully for all Monte Carlo simulation vectors. 
+
+For both countries, our calculated average flex dates fell very close to each localized maxima for daily case totals during the first spike in cases. However, the projections made for Italy reflect numbers for a nation that had instituted a nationwide lockdown nearly two weeks before the estimated flex date, when case counts were less than 10% of the estimated maximum $^4$. In the United States, only 42 states had issued stay at home orders by the time of the estimated flex date, and by the time more than half of the US states had issued stay at home orders, case counts were over 15% of the estimated maximum. Furthermore, only nine states had issued stay at home orders by two weeks before our estimated flex date $^3$. Thus, our projections for Italy represent those of a nation already intervening heavily with public health programs, whereas our projections for the United States represent those of a nation still struggling to commit to the kind of dramatic programs needed to slow the spread of COVID. The consequences of this delayed response are seen in Italy's impressive decline in daily cases between June and August, whereas the United States continues to see high case totals throughout the summer. Many projections, ours included, grossly underestimate the actual cumulative case counts in the United States, largely because stay at home orders were either not strict enough or relaxed too soon, in our assessment, to facilitate a time evolution that can be modeled by logistic regression. 
+
+\newpage
+
+**MLA Works Cited:**
+
+$^1$ Ciufolini, Ignazio and Paolozzi, Antonio. “Mathematical prediction of the time evolution of the COVID-19 pandemic in Italy by a Gauss error function and Monte Carlo simulations.” The European Physical Journal Plus. vol. 135, no. 355, 2020.
+
+$^2$ Cheng, Brian. “Modeling Logistic Growth Data in R.” Marine Global Change Ecology. University of Massachusetts Amherst, 7 May 2014. https://bscheng.com/2014/05/07/modeling-logistic-growth-data-in-r/. Accessed 6 December 2020.
+
+$^3$ Fernandez, Marisa. “Timeline: How the U.S. fell behind on the coronavirus.” Axios. Axios Media, 10 April 2020. https://www.axios.com/coronavirus-timeline-trump-administration-testing-c0858c03-5679-410b-baa4-dba048956bbf.html. Accessed 8 December 2020. 
+
+$^4$ Lawler, Dave. “Timeline: How Italy's coronavirus crisis became the world's deadliest.” Axios. Axios Media, 24 March 2020. https://www.axios.com/italy-coronavirus-timeline-lockdown-deaths-cases-2adb0fc7-6ab5-4b7c-9a55-bc6897494dc6.html. Accessed 8 December 2020.
+
+$^5$ “WHO Coronavirus Disease (COVID-19) Dashboard.” World Health Organization. World Health Organization, 8 December 2020. https://covid19.who.int/table. Accessed 8 December 2020. 
+
