@@ -15,6 +15,8 @@ library(car)
 
 set.seed(2020)
 
+
+
 covid_dat <- read.csv("WHO-COVID-19-global-data.csv") #reading in WHO data
 
 dates <- covid_dat$Date_reported
