@@ -1,0 +1,314 @@
+Estimating COVID-19 Peaks
+========================================================
+author: Caroline Thomas, Spencer Kuhn, George Laird
+date: December 9, 2020
+autosize: true
+
+```{r, echo = FALSE, include = FALSE}
+library(gridExtra)
+library(cowplot)
+setwd("~/Desktop/STAT400 Project")
+# INSERT CODE
+library(tidyverse)
+library(readr)
+library(car)
+
+set.seed(2020)
+
+covid_dat <- read.csv("WHO-COVID-19-global-data.csv") #reading in WHO data
+
+dates <- covid_dat$Date_reported
+
+italy_dat <- covid_dat %>% # filtering for Italy data
+  filter(Country == "Italy")
+
+ggplot() +
+  geom_line(data = italy_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = italy_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("Overview of COVID-19 Cases in Italy") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+
+italy_dat_early <- italy_dat[44:87,]  #filtering 2/15 to 3/29
+
+italy_dat_early["index"] <- seq(1:nrow(italy_dat_early)) #creating index column
+
+
+
+Italy_Data <- ggplot() +
+  geom_line(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("COVID-19 Cases in Italy Feb 15th to March 29th") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+
+# Logistic Regression
+
+# NLS METHOD
+
+coef(lm(logit(italy_dat_early$Cumulative_cases/100000)~italy_dat_early$index))
+
+italy_log <- nls(italy_dat_early$Cumulative_cases~a/(1+exp(-(b+c*italy_dat_early$index))),
+                 start=list(a=100000,b=-10.242468,c=0.293917),data=italy_dat_early,trace=TRUE)
+
+summary(italy_log)
+
+flex_point <- -coef(italy_log)[2]/coef(italy_log)[3]
+
+projection <- (coef(italy_log)[1])/(1 + exp(-(coef(italy_log)[2]+coef(italy_log)[3]*1:100)))
+
+proj_dates <- data.frame(projection, "date" = dates[44:143])
+
+Italy_Regression <- ggplot() +
+  geom_point(data = italy_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = proj_dates, aes(x = as.Date(date, "%m/%d/%y"), y = projection), color = "blue") +
+  ylim(0,130000) +
+  xlab("Date") +
+  ylab("Cumulative Cases") +
+  ggtitle("Cumulative Cases with Fitted Regression Line for Italy") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+
+# MC simulations
+
+sim <- function(m, n) {
+  mat <- matrix(data = NA, nrow = m, ncol = n) 
+  
+  for (i in 1:m){
+    mat[i,] <- rnorm(n, sd = 0.1, mean = 1)
+  }
+  
+  return(mat)
+}
+
+cum_days <- italy_dat[44:84,6] #only use cum cases from Feb 15th to March 26th
+
+simulations <- sim(150, 41) #150 simulations for 41 days
+
+mult <- function(x, y){
+  new_mat <- matrix(data = NA, nrow = 150, ncol = length(x))
+  for (i in 1:length(x)) {
+    new_mat[,i] <- x[i]*y[,i]
+  }
+  return(new_mat)
+}
+
+test <- mult(cum_days, simulations)
+
+mc_mat <- as.data.frame(test)
+
+# Run logistic regression for 150 simulations and get flex date for each
+
+flex_mc <- rep(NA, 150)
+
+for (i in 1:150) {
+  row_data <- t(mc_mat[i,])
+  index <- seq(1:length(row_data))
+  coefs <- coef(lm(logit(row_data/100000)~index))
+  italy_log <- nls(row_data~a/(1+exp(-(b+c*index))),
+                   start=list(a=100000,b=coefs[1],c=coefs[2]),trace=TRUE)
+  
+  summary(italy_log)
+  
+  flex_mc[i] <- -coef(italy_log)[2]/coef(italy_log)[3]
+}
+
+##getting error for some of the MC simulations (too many iterations?)
+
+mean(na.omit(flex_mc)) #mean flex date -> 39 days from Feb 15th = March 24th
+#original paper's result was March 25th so we are close!
+sd(na.omit(flex_mc)) #sd of flex dates
+
+Italy_MC <- ggplot() + #plot of simulated flex dates with line for avg
+  geom_point(aes(x = seq(1,150,1), y = flex_mc), color = "red") +
+  xlab("MC Simulation") +
+  ylab("# Days from Feb 15th") +
+  ggtitle("Projected Flex Date for 150 MC Simulations (Italy)") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc)))) +
+  theme_bw()
+
+
+
+# Extension: US Data
+
+us_dat <- covid_dat %>%
+  filter(Country == "United States of America")
+
+ggplot() +
+  geom_line(data = us_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = us_dat, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("Overview of COVID-19 Cases in the United States") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+
+us_dat_early <- us_dat[30:100,] #selecting days Feb 1st to April 11th
+
+US_Data <- ggplot() +
+  geom_line(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = New_cases), color = "blue") +
+  xlab("Date") +
+  ylab("Cumulative Cases (red) and New Cases (blue)") +
+  ggtitle("COVID-19 Cases in US Feb 1st to April 11th") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+
+# NLS 
+
+us_dat_early["index"] <- seq(1:nrow(us_dat_early)) #creating index column
+
+
+coef(lm(logit(us_dat_early$Cumulative_cases/500000)~us_dat_early$index))
+
+us_log <- nls(us_dat_early$Cumulative_cases~a/(1+exp(-(b+c*us_dat_early$index))),
+              start=list(a=500000,b=-13.0652170,c=0.1920636),data=us_dat_early,trace=TRUE)
+
+summary(us_log)
+
+flex_point <- -coef(us_log)[2]/coef(us_log)[3]
+
+projection <- (coef(us_log)[1])/(1 + exp(-(coef(us_log)[2]+coef(us_log)[3]*1:100)))
+
+proj_dates <- data.frame(projection, "date" = dates[30:129])
+
+US_Regression <- ggplot() +
+  geom_point(data = us_dat_early, aes(x = as.Date(Date_reported, "%m/%d/%y"), y = Cumulative_cases), color = "red") +
+  geom_line(data = proj_dates, aes(x = as.Date(date, "%m/%d/%y"), y = projection), color = "blue") +
+  ylim(0,650000) +
+  xlab("Date") +
+  ylab("Cumulative Cases") +
+  ggtitle("Cumulative Cases with Fitted Regression Line for US") + 
+  theme(axis.text.x = element_text(angle=45, hjust = 1)) +
+  theme_bw()
+
+# MC Simulations
+
+cum_days_us <- us_dat_early$Cumulative_cases
+
+simulations_us <- sim(150, 71) #150 simulations for 71 days
+
+
+test_us <- mult(cum_days_us, simulations_us)
+
+mc_mat_us <- as.data.frame(test_us)
+
+flex_mc_us <- rep(NA, 150)
+
+#for (i in 1:150) {
+ # row_data <- t(mc_mat_us[i,])
+  #index <- seq(1:length(row_data))
+#  coefs <- coef(lm(logit(row_data/500000)~index))
+#  us_log <- nls(row_data~a/(1+exp(-(b+c*index))),
+ #               start=list(a=500000,b=coefs[1],c=coefs[2]),trace=TRUE)
+  #
+#  summary(us_log)
+#  
+#  flex_mc_us[i] <- -coef(us_log)[2]/coef(us_log)[3]
+#}
+
+mean(na.omit(flex_mc_us)) #mean flex date -> 67 days from Feb 1st = April 7th
+sd(na.omit(flex_mc_us)) #sd of flex dates
+
+US_MC <- ggplot() + #plot of simulated flex dates with line for avg
+  geom_point(aes(x = seq(1,150,1), y = flex_mc_us), color = "red") +
+  xlab("MC Simulation") +
+  ylab("# Days from Feb 1st") +
+  ggtitle("Projected Flex Date for 150 MC Simulations (US)") +
+  geom_hline(aes(yintercept = mean(na.omit(flex_mc_us)))) +
+  theme_bw()
+
+### END CODE
+
+```
+
+========================================================
+# Source Paper
+
+![](SourcePaper.png)
+
+- Modeling the progression of COVID-19 cases/fatalities over the past weeks
+- Predicting the progression of these cases into the future
+- Predicting a peak day, where the greatest number of new cases is reported
+
+
+========================================================
+# Scope of the source paper
+
+- Italy and China
+- Cases and Fatalities
+- Monte Carlo
+
+========================================================
+
+# Original Italian Regression
+
+![](SourcePaperRegression.png)
+
+========================================================
+
+# Our Italian Regression
+
+```{r, echo = FALSE, fig.height = 8, fig.width = 7}
+par(mfrow=c(1,2))
+Italy_Data
+Italy_Regression
+#grid.arrange(Italy_Data, Italy_Regression, ncol = 2)
+#plot_grid(Italy_Data, Italy_Regression)
+```
+
+========================================================
+
+# Original Italian Monte Carlo
+
+![](SourcePaperMonteCarlo.png)
+
+========================================================
+
+# Our Italian Monte Carlo
+
+```{r}
+Italy_MC
+```
+
+========================================================
+# Extension: United States Regression
+
+```{r}
+US_Data
+US_Regression
+```
+
+========================================================
+# Extension: United States Monte Carlo
+
+
+```{r}
+US_MC
+```
+
+========================================================
+# Limitations
+
+- Differences in tests provided in a single day
+- Changes over time in testing efforts
+- Changes over time in lockdown procedures
+- Effects of future lockdown procedures
+
+========================================================
+# Works Cited
+
+MLA Works Cited:
+
+Ciufolini, Ignazio and Paolozzi, Antonio. “Mathematical prediction of the time evolution of the COVID-19 pandemic in Italy by a Gauss error function and Monte Carlo simulations.” The European Physical Journal Plus. vol. 135, no. 355, 2020.
+
+Cheng, Brian. “Modeling Logistic Growth Data in R.” Marine Global Change Ecology. University of Massachusetts Amherst, May 7, 2014. https://bscheng.com/2014/05/07/modeling-logistic-growth-data-in-r/. Accessed 6 December 2020.
