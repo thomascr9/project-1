@@ -234,9 +234,10 @@ US_MC <- ggplot() + #plot of simulated flex dates with line for avg
 
 ![](SourcePaper.png)
 
-- Modeling the progression of COVID-19 cases/fatalities over the past weeks
-- Predicting the progression of these cases into the future
-- Predicting a peak day, where the greatest number of new cases is reported
+- Modeling the progression of COVID-19 cases/fatalities during first few months of pandemic
+- Predicting the progression of these cases into the future including:
+  - Flex date (inflection point = rate of new cases decelerates)
+  - Date of substantial reduction in cases (less than 100 new cases)
 
 
 ========================================================
