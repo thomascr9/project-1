@@ -111,9 +111,17 @@ for (i in 1:150) {
 
 ##getting error for some of the MC simulations (too many iterations?)
 
-mean(na.omit(flex_mc)) #mean flex date -> 39 days from Feb 15th = March 24th
+mean(na.omit(flex_mc)) #mean flex date -> 38 days from Feb 15th = March 23rd
   #original paper's result was March 25th so we are close!
 sd(na.omit(flex_mc)) #sd of flex dates
+
+upper <- mean(flex_mc) + qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
+lower <- mean(flex_mc) - qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
+
+lower
+upper
+#March 23rd to March 24th
+#how should we round # of days??
 
 ggplot() + #plot of simulated flex dates with line for avg
   geom_point(aes(x = seq(1,150,1), y = flex_mc), color = "red") +
@@ -207,6 +215,13 @@ for (i in 1:150) {
 
 mean(na.omit(flex_mc_us)) #mean flex date -> 67 days from Feb 1st = April 7th
 sd(na.omit(flex_mc_us)) #sd of flex dates
+
+upper <- mean(flex_mc_us) + qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
+lower <- mean(flex_mc_us) - qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
+
+lower
+upper
+#April 6th to April 7th
 
 ggplot() + #plot of simulated flex dates with line for avg
   geom_point(aes(x = seq(1,150,1), y = flex_mc_us), color = "red") +
