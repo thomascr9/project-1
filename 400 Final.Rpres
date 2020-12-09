@@ -7,7 +7,7 @@ autosize: true
 ```{r, echo = FALSE, include = FALSE}
 library(gridExtra)
 library(cowplot)
-setwd("~/Desktop/STAT400 Project")
+#setwd("~/Desktop/STAT400 Project")
 # INSERT CODE
 library(tidyverse)
 library(readr)
@@ -204,17 +204,15 @@ mc_mat_us <- as.data.frame(test_us)
 
 flex_mc_us <- rep(NA, 150)
 
-#for (i in 1:150) {
- # row_data <- t(mc_mat_us[i,])
-  #index <- seq(1:length(row_data))
-#  coefs <- coef(lm(logit(row_data/500000)~index))
-#  us_log <- nls(row_data~a/(1+exp(-(b+c*index))),
- #               start=list(a=500000,b=coefs[1],c=coefs[2]),trace=TRUE)
-  #
-#  summary(us_log)
-#  
-#  flex_mc_us[i] <- -coef(us_log)[2]/coef(us_log)[3]
-#}
+for (i in 1:150) {
+ row_data <- t(mc_mat_us[i,])
+ index <- seq(1:length(row_data))
+ coefs <- coef(lm(logit(row_data/700000)~index))
+ us_log <- nls(row_data~a/(1+exp(-(b+c*index))),
+                start=list(a=700000,b=coefs[1],c=coefs[2]),trace=TRUE)
+ summary(us_log)
+ flex_mc_us[i] <- -coef(us_log)[2]/coef(us_log)[3]
+}
 
 mean(na.omit(flex_mc_us)) #mean flex date -> 67 days from Feb 1st = April 7th
 sd(na.omit(flex_mc_us)) #sd of flex dates
