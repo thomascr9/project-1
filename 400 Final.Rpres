@@ -1,7 +1,7 @@
 Estimating COVID-19 Trends
 ========================================================
 author: Caroline Thomas, Spencer Kuhn, George Laird
-date: December 9, 2020
+date: December 10, 2020
 autosize: true
 
 ```{r, echo = FALSE, include = FALSE}
