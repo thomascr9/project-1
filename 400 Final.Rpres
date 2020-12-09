@@ -13,7 +13,10 @@ library(tidyverse)
 library(readr)
 library(car)
 
-set.seed(2020)
+set.seed(2021)
+set.seed(2020) #GIT TES
+
+#TEST
 
 
 
