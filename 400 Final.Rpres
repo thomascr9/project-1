@@ -1,24 +1,19 @@
-Estimating COVID-19 Peaks
+Estimating COVID-19 Trends
 ========================================================
 author: Caroline Thomas, Spencer Kuhn, George Laird
 date: December 9, 2020
 autosize: true
 
 ```{r, echo = FALSE, include = FALSE}
-library(gridExtra)
-library(cowplot)
+#library(gridExtra)
+#library(cowplot)
 #setwd("~/Desktop/STAT400 Project")
 # INSERT CODE
 library(tidyverse)
 library(readr)
 library(car)
 
-set.seed(2021)
-set.seed(2020) #GIT TES
-
-#TEST
-
-
+set.seed(2020)
 
 covid_dat <- read.csv("WHO-COVID-19-global-data.csv") #reading in WHO data
 
@@ -233,9 +228,8 @@ US_MC <- ggplot() + #plot of simulated flex dates with line for avg
 ### END CODE
 
 ```
-
+Source Paper
 ========================================================
-# Source Paper
 
 ![](SourcePaper.png)
 
@@ -244,75 +238,185 @@ US_MC <- ggplot() + #plot of simulated flex dates with line for avg
   - Flex date (inflection point = rate of new cases decelerates)
   - Date of substantial reduction in cases (less than 100 new cases)
 
-
+Scope of the source paper
 ========================================================
-# Scope of the source paper
 
 - Italy and China
 - Cases and Fatalities
 - Monte Carlo
 
+![](SourcePaperChina.png)
+
+COVID-19 in Italy
 ========================================================
 
-# Original Italian Regression
+```{r, echo = FALSE}
+Italy_Data
+```
+
+- Italy as leader in deaths (3-19)
+- Healthcare Shortages
+
+Original Italian Regression
+========================================================
+
+- Error Function: $a + b \space \text{erf} (cx − d)$
+- Use of multiple models
 
 ![](SourcePaperRegression.png)
 
+- Estimated Flex Date: March 25th (40 days)
+
+Our Italian Regression
 ========================================================
 
-# Our Italian Regression
+Non-linear least squares Regression:
+$\frac{a}{1 + e^{-(b+cx)}}$
 
-```{r, echo = FALSE, fig.height = 8, fig.width = 7}
-par(mfrow=c(1,2))
-Italy_Data
+$a = 100,000$, $\space b = -10.242$, $\space c = 0.294$
+
+```{r, echo = FALSE}
 Italy_Regression
-#grid.arrange(Italy_Data, Italy_Regression, ncol = 2)
-#plot_grid(Italy_Data, Italy_Regression)
 ```
 
+- Estimated Flex Date: March 23rd (38 days)
+
+Role of Monte Carlo
 ========================================================
 
-# Original Italian Monte Carlo
+<font size="5">
+
+- Estimation the effect of measurement errors
+
+- Case totals from Feb 25th - 27th
+
+```{r Demonstrating MC, echo = FALSE}
+cum_days <- italy_dat[54:56,6] # Three days from late Feb
+# TEST
+print(cum_days)
+```
+
+- For this example we'll use m = 5, n = 3
+
+- Generating realizations of $X \sim Normal(1,0.1)$
+
+```{r, echo = FALSE}
+simulations <- sim(5, 3) # 2 simulations for 3 days
+print(simulations)
+```
+
+- Multiplying this vector by our original data
+
+```{r, echo = FALSE}
+mult <- function(x, y){
+  new_mat <- matrix(data = NA, nrow = 5, ncol = length(x))
+  for (i in 1:length(x)) {
+    new_mat[,i] <- x[i]*y[,i]
+  }
+  return(new_mat)
+}
+test <- mult(cum_days, simulations)
+mc_mat <- as.data.frame(test)
+print(mc_mat)
+```
+
+- Using these simulations for regression
+
+</font>
+
+Original Monte Carlo Implementation
+========================================================
 
 ![](SourcePaperMonteCarlo.png)
 
+- Estimated Flex Date Range: March 23 - March 27 (38-42 days)
+
+Our Italian Monte Carlo
 ========================================================
 
-# Our Italian Monte Carlo
-
-```{r}
+```{r, echo = FALSE}
 Italy_MC
 ```
 
-========================================================
-# Extension: United States Regression
+- Estimated Flex Date Range: March 23 - March 25 (38-40 days)
 
-```{r}
+Extension: United States
+========================================================
+
+```{r, echo = FALSE, fig.width = 6.6}
+Italy_Data
 US_Data
+```
+
+United States Regression
+========================================================
+
+Non-linear least squares Regression:
+$\frac{a}{1 + e^{-(b+cx)}}$
+
+$a = 700,000$
+
+```{r, echo = FALSE}
 US_Regression
 ```
 
+- Estimated Flex Date: April 7 (67 days)
+
+United States Monte Carlo
 ========================================================
-# Extension: United States Monte Carlo
 
-
-```{r}
+```{r, echo = FALSE}
 US_MC
 ```
 
+- Estimated Flex Date: April 6 - April 7 (66-67 days)
+
+Limitations
 ========================================================
-# Limitations
+
+<font size="12">
 
 - Differences in tests provided in a single day
 - Changes over time in testing efforts
 - Changes over time in lockdown procedures
 - Effects of future lockdown procedures
 
+</font>
+
+Discussion
 ========================================================
-# Works Cited
+
+<font size="12">
+
+- How do our flex date estimates perform?
+- Differences in lockdown procedures
+
+</font>
+
+
+Works Cited
+========================================================
+
+<font size="5">
 
 MLA Works Cited:
 
-Ciufolini, Ignazio and Paolozzi, Antonio. “Mathematical prediction of the time evolution of the COVID-19 pandemic in Italy by a Gauss error function and Monte Carlo simulations.” The European Physical Journal Plus. vol. 135, no. 355, 2020.
+Ciufolini, Ignazio and Paolozzi, Antonio. “Mathematical prediction of the time evolution of the COVID-19
+pandemic in Italy by a Gauss error function and Monte Carlo simulations.” The European Physical Journal
+Plus. vol. 135, no. 355, 2020.
 
-Cheng, Brian. “Modeling Logistic Growth Data in R.” Marine Global Change Ecology. University of Massachusetts Amherst, May 7, 2014. https://bscheng.com/2014/05/07/modeling-logistic-growth-data-in-r/. Accessed 6 December 2020.
+Cheng, Brian. “Modeling Logistic Growth Data in R.” Marine Global Change Ecology. University of
+Massachusetts Amherst, 7 May 2014. https://bscheng.com/2014/05/07/modeling-logistic-growth-data-in-r/.
+Accessed 6 December 2020.
+
+Fernandez, Marisa. “Timeline: How the U.S. fell behind on the coronavirus.” Axios. Axios Media, 10
+April 2020. https://www.axios.com/coronavirus-timeline-trump-administration-testing-c0858c03-5679-410b-
+baa4-dba048956bbf.html. Accessed 8 December 2020.
+
+Lawler, Dave. “Timeline: How Italy’s coronavirus crisis became the world’s deadliest.” Axios. Axios Media,
+24 March 2020. https://www.axios.com/italy-coronavirus-timeline-lockdown-deaths-cases-2adb0fc7-6ab5-
+4b7c-9a55-bc6897494dc6.html. Accessed 8 December 2020.
+
+“WHO Coronavirus Disease (COVID-19) Dashboard.” World Health Organization. World Health Organization, 8 December 2020. https://covid19.who.int/table. Accessed 8 December 2020.
+
+</font>
