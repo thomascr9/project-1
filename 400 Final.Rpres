@@ -1,7 +1,11 @@
 Estimating COVID-19 Trends
 ========================================================
 author: Caroline Thomas, Spencer Kuhn, George Laird
+<<<<<<< HEAD
+date: December 10 , 2020
+=======
 date: December 10, 2020
+>>>>>>> 4f9485ebd314902f52f37a16ae4c2743ca8902c7
 autosize: true
 
 ```{r, echo = FALSE, include = FALSE}
@@ -275,7 +279,7 @@ $\frac{a}{1 + e^{-(b+cx)}}$
 
 $a = 100,000$, $\space b = -10.242$, $\space c = 0.294$
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, fig.width = 11}
 Italy_Regression
 ```
 
@@ -286,7 +290,7 @@ Role of Monte Carlo
 
 <font size="5">
 
-- Estimation the effect of measurement errors
+- Estimating the effect of measurement errors
 
 - Case totals from Feb 25th - 27th
 
@@ -356,7 +360,7 @@ $\frac{a}{1 + e^{-(b+cx)}}$
 
 $a = 700,000$
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, fig.width = 11}
 US_Regression
 ```
 
@@ -371,6 +375,20 @@ US_MC
 
 - Estimated Flex Date: April 6 - April 7 (66-67 days)
 
+
+Discussion
+========================================================
+
+<font size="12">
+
+- Limits of NLS Regression
+- Replication (U.S.)
+- How do our flex date estimates perform?
+- Differences in lockdown procedures
+- Differences in timeline
+
+</font>
+
 Limitations
 ========================================================
 
@@ -382,17 +400,6 @@ Limitations
 - Effects of future lockdown procedures
 
 </font>
-
-Discussion
-========================================================
-
-<font size="12">
-
-- How do our flex date estimates perform?
-- Differences in lockdown procedures
-
-</font>
-
 
 Works Cited
 ========================================================
