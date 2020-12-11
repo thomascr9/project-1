@@ -109,7 +109,6 @@ for (i in 1:150) {
   flex_mc[i] <- -coef(italy_log)[2]/coef(italy_log)[3]
 }
 
-##getting error for some of the MC simulations (too many iterations?)
 
 mean(na.omit(flex_mc)) #mean flex date -> 38 days from Feb 15th = March 23rd
   #original paper's result was March 25th so we are close!
