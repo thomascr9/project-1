@@ -287,17 +287,11 @@ ggplot() + #plot of simulated flex dates with line for avg
 
 ```
 
-Corresponding to these plots, we gathered the mean, standard deviation, and 95%, t-quantile confidence intervals for Italian and US flex points:
+Corresponding to these plots, we gathered the mean, approximate flex date, and standard deviation for Italian and US flex points. Additionally, we computed the 2.5th and 97.5th percentiles for each set of flex points. These results are summarized in Table 1 below. 
 
 ```{r}
 
 #ITALY
-
-#gathering mean flex date -> 38 days from Feb 15th = March 23rd
-mean(na.omit(flex_mc)) 
-
-#gathering standard deviation of flex dates
-sd(na.omit(flex_mc)) 
 
 #obtaining confidence intervals for the true flex date
 upper <- mean(flex_mc) + qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
@@ -309,12 +303,6 @@ upper
 
 #UNITED STATES
 
-#gathering mean flex date -> 67 days from Feb 1st = April 7th
-mean(na.omit(flex_mc_us)) 
-
-#gathering standard deviation of flex dates
-sd(na.omit(flex_mc_us)) 
-
 #obtaining confidence intervals for the true flex date
 upper <- mean(flex_mc_us) + qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
 lower <- mean(flex_mc_us) - qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
@@ -324,6 +312,20 @@ upper
 #April 6th to April 7th
 
 
+tab <- data.frame("Mean Number of Days" = c(round(mean(flex_mc),1), round(mean(flex_mc_us),1)), 
+                  "Approx. Flex Date" = c("March 23rd", "April 7th"),
+                  "Standard Deviation" = c(round(sd(flex_mc),1), round(sd(flex_mc_us),1)),
+                  "2.5 percentile" = c(round(quantile(flex_mc, probs = 0.025),1), 
+                                       round(quantile(flex_mc_us, probs = 0.025),1)),
+                  "97.5 percentile" = c(round(quantile(flex_mc, probs = 0.975),1), 
+                                       round(quantile(flex_mc_us, probs = 0.975),1)))
+row.names(tab) <- c("Italy", "United States")
+colnames(tab) <- c("Mean # of Days", "Approx. Flex Date",
+                   "SD of # of Days", "2.5th percentile", "97.5th percentile")
+
+knitr::kable(tab, caption = "Table 1: Summary of Monte Carlo Results")
+  
+  
 ```
 
 \newpage
@@ -336,7 +338,7 @@ There are some notable shortcomings in our data to be considered alongside the r
 
 In terms of replicating the experiments of Cuifolini and Paolozzi, we were able to reach an average flex date very close to their own for Italy. Any discrepancies are likely due to the NLS method as opposed to the original method using a Gauss Error function. The Monte Carlo simulation method allowed us to better assess error and uncertainty in the reported numbers and the projection that resulted. In the extension of this method to the United States, we ran into some issues with the initial asymptote estimate. the NLS algorithm ran into issues with our first estimate of 500,000, so we changed the estimate to 700,000 in order for NLS to run successfully for all Monte Carlo simulation vectors. 
 
-For both countries, our calculated average flex dates fell very close to each localized maxima for daily case totals during the first spike in cases. However, the projections made for Italy reflect numbers for a nation that had instituted a nationwide lockdown nearly two weeks before the estimated flex date, when case counts were less than 10% of the estimated maximum $^4$. In the United States, only 42 states had issued stay at home orders by the time of the estimated flex date, and by the time more than half of the US states had issued stay at home orders, case counts were over 15% of the estimated maximum. Furthermore, only nine states had issued stay at home orders by two weeks before our estimated flex date $^3$. Thus, our projections for Italy represent those of a nation already intervening heavily with public health programs, whereas our projections for the United States represent those of a nation still struggling to commit to the kind of drastic public health measures and restrictions needed to slow the spread of COVID. The consequences of this delayed response are seen in Italy's impressive decline in daily cases between June and August, whereas the United States continues to see high case totals throughout the summer as shown in Figures 1 and 3 above. Many projections, ours included, grossly underestimate the actual cumulative case counts in the United States, largely because stay at home orders were either not strict enough or relaxed too soon, in our assessment, to facilitate a time evolution that can be modeled by logistic regression.Further research could be done to investigate other modeling methods using current cumulative case data to perhaps find a more suitable method for modeling the progression of COVID-19 across the world.
+For both countries, our calculated average flex dates fell very close to each localized maxima for daily case totals during the first spike in cases. However, the projections made for Italy reflect numbers for a nation that had instituted a nationwide lockdown nearly two weeks before the estimated flex date, when case counts were less than 10% of the estimated maximum $^4$. In the United States, only 42 states had issued stay at home orders by the time of the estimated flex date, and by the time more than half of the US states had issued stay at home orders, case counts were over 15% of the estimated maximum. Furthermore, only nine states had issued stay at home orders by two weeks before our estimated flex date $^3$. Thus, our projections for Italy represent those of a nation already intervening heavily with public health programs, whereas our projections for the United States represent those of a nation still struggling to commit to the kind of drastic public health measures and restrictions needed to slow the spread of COVID. The consequences of this delayed response are seen in Italy's impressive decline in daily cases between June and August, whereas the United States continues to see high case totals throughout the summer as shown in Figures 1 and 3 above. Many projections, ours included, grossly underestimate the actual cumulative case counts in the United States, largely because stay at home orders were either not strict enough or relaxed too soon, in our assessment, to facilitate a time evolution that can be modeled by logistic regression. Further research could be done to investigate other modeling methods using current cumulative case data to perhaps find a more suitable method for modeling the progression of COVID-19 across the world.
 
 \newpage
 
