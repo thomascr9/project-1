@@ -287,9 +287,9 @@ ggplot() + #plot of simulated flex dates with line for avg
 
 ```
 
-Corresponding to these plots, we gathered the mean, approximate flex date, and standard deviation for Italian and US flex points. Additionally, we computed the 2.5th and 97.5th percentiles for each set of flex points. These results are summarized in Table 1 below. 
+Corresponding to these plots, we gathered the mean, approximate flex date, and standard deviation for Italian and US flex points. Additionally, we computed the 2.5th and 97.5th percentiles for each set of flex dates These results are summarized in Table 1 below. For Italy, our percentiles capture a range of flex dates from approximately March 19th to April 3rd. For the United States, our percentiles capture a range of flex dates from approximately April 3rd to April 12th.
 
-```{r}
+```{r,echo=FALSE}
 
 #ITALY
 
@@ -297,8 +297,6 @@ Corresponding to these plots, we gathered the mean, approximate flex date, and s
 upper <- mean(flex_mc) + qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
 lower <- mean(flex_mc) - qt(0.975, df = 149)*(sd(flex_mc)/sqrt(150))
 
-lower
-upper
 #March 23rd to March 24th
 
 #UNITED STATES
@@ -307,8 +305,6 @@ upper
 upper <- mean(flex_mc_us) + qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
 lower <- mean(flex_mc_us) - qt(0.975, df = 149)*(sd(flex_mc_us)/sqrt(150))
 
-lower
-upper
 #April 6th to April 7th
 
 
